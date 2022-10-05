@@ -1,0 +1,70 @@
+name: 📝 Status Reporter
+
+# Notes:
+# trigger lambda function, get metadata on RedisCache
+# get size of contribution repository
+
+on:
+  workflow_dispatch:
+  # Run job every sunday at 12:00pm
+  # schedule:
+  #             # https://crontab.guru/
+  #             #   ┌───────────── minute (0 - 59)
+  #             # │ ┌───────────── hour (0 - 23)
+  #             # │ │ ┌───────────── day of the month (1 - 31)
+  #             # │ │ │ ┌───────────── month (1 - 12 or JAN-DEC)
+  #             # │ │ │ │ ┌───────────── day of the week (0 - 6 or SUN-SAT)
+  #             # │ │ │ │ │
+  #             # │ │ │ │ │
+  #             # │ │ │ │ │
+  #             # * * * * *
+  #   - cron:  '0 12 * * 0'
+
+jobs:
+  report_status:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: ⚡️ Invoke Status Report Lambda Function
+        id: lambdaInvocation
+        uses: gagoar/invoke-aws-lambda@master
+        with:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          FunctionName: ${{ github.event.repository.name }}-prod-reportStatus
+
+      - name: ✏️ Store response payload to file
+        if: always()
+        run: echo '${{ fromJSON(steps.lambdaInvocation.outputs.response).Payload }}' > status-report.json
+
+      - name: 🗃️ Format report
+        if: always()
+        run: |
+          cat > report.md
+          echo '## Crawler Status Report' >> report.md
+          echo '```json' >> report.md
+          echo '${{ fromJSON(steps.lambdaInvocation.outputs.response).Payload }}' >> report.md
+          echo '```' >> report.md   
+
+      - name: ⬆️ Upload report artifact
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: report-markdown
+          path: report.md 
+
+      - name: 💫 Job Summary Output
+        if: always()
+        # echo '${{ fromJSON(steps.lambdaInvocation.outputs.response).Payload }}' >> $GITHUB_STEP_SUMMARY
+        # echo '```' >> $GITHUB_STEP_SUMMARY
+        # echo "$(cat status-report.json )" >> $GITHUB_STEP_SUMMARY
+        # echo "$(jq <<< status-report.json )" >> $GITHUB_STEP_SUMMARY
+        run: | 
+          echo '## Crawler Status Report' >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          echo "$( cat status-report.json | jq . | jq ."body")" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+         
+
+      
