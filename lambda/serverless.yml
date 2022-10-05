@@ -1,0 +1,63 @@
+# Welcome to serverless. Read the docs
+# https://serverless.com/framework/docs/
+
+# Serverless.yml is the configuration the CLI
+# uses to deploy your code to your provider of choice
+
+# The `service` block is the name of the service
+service: test-crawler
+
+frameworkVersion: '3'
+
+# The `provider` block defines where your service will be deployed
+provider:
+  name: aws
+  runtime: nodejs14.x
+  # Default memory size for functions (default: 1024MB)
+  memorySize: 512
+  # Default timeout for functions (default: 6 seconds)
+  # Note: API Gateway has a maximum timeout of 30 seconds
+  timeout: 20 # seconds
+  # Duration for CloudWatch log retention (default: forever)
+  logRetentionInDays: 14
+  deploymentMethod: direct
+  environment:
+      REDIS_ENDPOINT: ${env:REDIS_ENDPOINT}
+      REDIS_PORT: ${env:REDIS_PORT}
+      REDIS_PASSWORD: ${env:REDIS_PASSWORD}
+      CONTRIBUTION_STORE_REPO: ${env:CONTRIBUTION_STORE_REPO}
+
+# name: ${opt:stage}-hello
+
+# The `functions` block defines what code to deploy
+functions:
+  crawlRepository:
+    handler: handler.crawlRepository
+    # The `events` block defines how to trigger the handler.crawlRepository code
+    # Modifies the URL => endpoint: GET - https://jlt5srv171.execute-api.us-east-1.amazonaws.com/dev/hello-world
+    events:
+      - http:
+          path: crawl-repository
+          method: get
+          cors: true
+  fetchAnalyzeRepoQueue:
+    handler: handler.fetchAnalyzeRepoQueue
+    events:
+      - http:
+          path: fetch-analyze-repo-queue
+          method: get
+          cors: true
+  reportStatus:
+    handler: handler.reportStatus
+    events:
+      - http:
+          path: report-status
+          method: get
+          cors: true
+  databaseReset:
+    handler: handler.databaseReset
+    events:
+      - http:
+          path: database-reset
+          method: get
+          cors: true
