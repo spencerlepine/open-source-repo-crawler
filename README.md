@@ -8,11 +8,14 @@ Uses scheduled GitHub Actions invoking AWS Lambda functions connected to Redis d
 
 ## 🌟 How It's Built
 
-![Project Walk-through Video Thumbnail](TODO)
-
 - Development Process - [Blog Post](TODO) | [Medium Post](TODO)
 - Project Walk-through - [Youtube Video](TODO)
 - Project Walk-through Slideshow - [Google Slides](https://docs.google.com/presentation/d/1sANVXPe05rDFzKI7B5r8jIwC-Qpg4v47SLCIn9kdRBA/edit?usp=sharing)
+
+<!-- [!["Project Walk-through Video Thumbnail"](https://img.youtube.com/vi/YOUTUBE_VIDEO_ID_HERE/0.jpg)](https://www.youtube.com/watch?v=YOUTUBE_VIDEO_ID_HERE) TODO -->
+
+[!["Project Walk-through Video Thumbnail"](./docs/images/readme-thumbnail.png)](https://www.youtube.com/channel/UCBL6vAHJZqUlyJp-rcFU55Q)
+
 
 ## 🧰 Technologies
 - [GitHub Actions](TODO)
@@ -20,7 +23,7 @@ Uses scheduled GitHub Actions invoking AWS Lambda functions connected to Redis d
 - [AWS Lambda](TODO)
 - [Redis](TODO)
 
-## Documentation
+## 📄 Documentation
 
 - [Installation](docs/installation.md)
 - [Getting Started](docs/getting-started.md)
@@ -29,7 +32,7 @@ Uses scheduled GitHub Actions invoking AWS Lambda functions connected to Redis d
   - [Lambda Functions](docs/lambda.md)
   - [Repository Secrets](docs/secrets.yml)
 
-## Diagrams
+## 📊 Diagrams
 
 ![Architecture Diagram](./docs/images/architecture.png)
 
@@ -39,9 +42,15 @@ Uses scheduled GitHub Actions invoking AWS Lambda functions connected to Redis d
 
 ![Database Diagram](./docs/images/database-diagram.png)
 
+![Concerns Diagram](./docs/images/concerns.png)
+
+![Crawler Start List Example](./docs/images/crawler-start-list.png)
+
 [![Crawler Flowchart](./docs/images/crawl-flowchart.png)](https://lucid.app/lucidchart/925ad38a-d164-4034-a4a0-22d597ddddb4/edit?invitationId=inv_d8842df8-7a6a-489d-9435-456aac29975c#)
 
 ![Crawler Workflow](./docs/images/crawl-workflow.png)
+
+![Crawler Queue Example](./docs/images/url-queue-example.png)
 
 [![Analyze Flowchart](./docs/images/analyze-flowchart.png)](https://lucid.app/lucidchart/a50e19b9-94d8-40d8-a879-0b79fd790d7b/edit?invitationId=inv_1bfc44f5-3683-4870-b9c9-643dc327df9e#)
 
