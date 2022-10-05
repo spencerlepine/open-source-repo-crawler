@@ -25,24 +25,24 @@ Uses scheduled GitHub Actions invoking AWS Lambda functions connected to Redis d
 - [Installation](docs/installation.md)
 - [Getting Started](docs/getting-started.md)
 - Components:
-  - [Actions](docs/actions.md)
+  - [GitHub Actions](docs/actions.md)
   - [Lambda Functions](docs/lambda.md)
   - [Repository Secrets](docs/secrets.yml)
 
 ## Diagrams
 
-![Architecture Diagram](./images/architecture.png)
+![Architecture Diagram](./docs/images/architecture.png)
 
-![Repositories Diagram](./images/repositories-diagram.png)
+![Repositories Diagram](./docs/images/repositories-diagram.png)
 
-![Deploy Diagram](./images/deploy-diagram.png)
+![Deploy Diagram](./docs/images/deploy-diagram.png)
 
-![Database Diagram](./images/database-diagram.png)
+![Database Diagram](./docs/images/database-diagram.png)
 
-[![Crawler Flowchart](./images/crawl-flowchart.png)](https://lucid.app/lucidchart/925ad38a-d164-4034-a4a0-22d597ddddb4/edit?invitationId=inv_d8842df8-7a6a-489d-9435-456aac29975c#)
+[![Crawler Flowchart](./docs/images/crawl-flowchart.png)](https://lucid.app/lucidchart/925ad38a-d164-4034-a4a0-22d597ddddb4/edit?invitationId=inv_d8842df8-7a6a-489d-9435-456aac29975c#)
 
-![Crawler Workflow](./images/crawl-workflow.png)
+![Crawler Workflow](./docs/images/crawl-workflow.png)
 
-[![Analyze Flowchart](./images/analyze-flowchart.png)](https://lucid.app/lucidchart/a50e19b9-94d8-40d8-a879-0b79fd790d7b/edit?invitationId=inv_1bfc44f5-3683-4870-b9c9-643dc327df9e#)
+[![Analyze Flowchart](./docs/images/analyze-flowchart.png)](https://lucid.app/lucidchart/a50e19b9-94d8-40d8-a879-0b79fd790d7b/edit?invitationId=inv_1bfc44f5-3683-4870-b9c9-643dc327df9e#)
 
-![Analyze Workflow](./images/analyze-workflow.png)
+![Analyze Workflow](./docs/images/analyze-workflow.png)
