@@ -1,0 +1,31 @@
+name: 🌪️ RedisDB Reset
+
+on:
+  workflow_dispatch:
+  # Run job every day at 12:00pm
+  # schedule:
+  #             # https://crontab.guru/
+  #             #   ┌───────────── minute (0 - 59)
+  #             # │ ┌───────────── hour (0 - 23)
+  #             # │ │ ┌───────────── day of the month (1 - 31)
+  #             # │ │ │ ┌───────────── month (1 - 12 or JAN-DEC)
+  #             # │ │ │ │ ┌───────────── day of the week (0 - 6 or SUN-SAT)
+  #             # │ │ │ │ │
+  #             # │ │ │ │ │
+  #             # │ │ │ │ │
+  #             # * * * * *
+  #   - cron:  '0 12 * * *'
+
+jobs:
+  erase_database:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: ⚡️ Invoke Admin Reset Function Lambda
+        id: lambdaInvocation
+        uses: gagoar/invoke-aws-lambda@master
+        with:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          FunctionName: ${{ github.event.repository.name }}-prod-databaseReset
