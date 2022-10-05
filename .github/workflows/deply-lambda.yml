@@ -1,0 +1,39 @@
+name: 🚀 Deploy Lambda
+
+# Continuous Deployment for AWS Lambda
+# https://github.com/marketplace/actions/aws-lambda-deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - lambda/**
+
+jobs:
+  deploy-lambda:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./lambda
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: ➕ Setup serverless package
+        run: |
+          yarn global add serverless@3.22.0
+          serverless config credentials --provider aws --key ${{ secrets.AWS_ACCESS_KEY_ID }} --secret ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      
+      - name: 📦 Install dependencies
+        run: yarn install
+
+      - name: 🚀 Deploy Lambda function
+        # serverless deploy function --function myFunction
+        run: |
+          export REDIS_ENDPOINT=${{ secrets.REDIS_ENDPOINT }};
+          export REDIS_PORT=${{ secrets.REDIS_PORT }};
+          export REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }};
+          export CONTRIBUTION_STORE_REPO=${{ secrets.CONTRIBUTION_STORE_REPO }};
+          serverless deploy --stage prod --region us-east-1
