@@ -138,6 +138,7 @@ jobs:
         uses: actions-rs/cargo@v1
     
       - name: 📦 Install spell-checker dependency
+        # https://crates.io/crates/typos-cli
         run: cargo install typos-cli
 
       - name: 🚫 Preform typo scan
@@ -147,7 +148,7 @@ jobs:
           echo '## Detected Typos' >> output/typos.txt
           ${{ github.workspace }}/../../../.cargo/bin/typos >> output/typos.txt || true
           echo '## Detected Typos Diff' >> output/typo-diff.md
-          echo '```md' >> output/typo-diff.md
+          echo '```diff' >> output/typo-diff.md
           ${{ github.workspace }}/../../../.cargo/bin/typos --diff >> output/typo-diff.md || true
           echo '```' >> output/typo-diff.md
 
