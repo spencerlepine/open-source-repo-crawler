@@ -20,7 +20,7 @@ const admin = {
     await redis.del('analyzeCount')
     logger('[ADMIN]', 'flushed counter', 'warning')
   },
-  logEntires: async (redis) => {
+  logEntries: async (redis) => {
     const keys = await redis.sendCommand(['DBSIZE']);
     logger('[ADMIN LOG]', `keys: ${keys}`, 'warning');
 
@@ -42,14 +42,15 @@ const seedDatabase = async (redis) => {
   await admin.flushKeys(redis)
   await admin.clearQueue(redis)
   await admin.flushCounts(redis)
-  await admin.logEntires(redis)
+  await admin.logEntries(redis)
 
   let starterRepos = [
     'public-apis/public-apis',
     'sereneblue/awesome-oss',
     'n0shake/Public-APIs',
     'VNAPNIC/public-apis',
-    'sindresorhus/awesome'
+    'sindresorhus/awesome',
+    'matiassingers/awesome-readme'
   ];
   for (let i = 0; i < starterRepos.length; i++) {
     await addLinkToCrawlQueue(redis, starterRepos[i])

@@ -5,7 +5,7 @@ module.exports = (handleResponse, connectRedisDB) => async (event, context, call
 
   const [analyzeCount, repoFromQueue] = await getRepoFromQueue(redisClient);
   if (!repoFromQueue) {
-    const err = '[FAILED] unable to retreived next URL from analyze queue'
+    const err = '[FAILED] unable to retrieved next URL from analyze queue'
     const errorResponse = {
       message: err,
       repoUrl: null,
@@ -18,7 +18,7 @@ module.exports = (handleResponse, connectRedisDB) => async (event, context, call
   }
 
   const analyzeResponse = {
-    message: 'Retreived next URL from analyze queue',
+    message: 'Retrieved next URL from analyze queue',
     repoUrl: repoFromQueue,
   };
 
