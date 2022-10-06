@@ -1,4 +1,4 @@
-const handler = require('./handler')
+const handler = require("./handler");
 
 // const reportStatus = handler.reportStatus
 // reportStatus({}, {}, (err, response) => console.log(response))
