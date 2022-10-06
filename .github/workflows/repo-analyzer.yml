@@ -2,24 +2,26 @@ name: 🧐 Repo Analyzer
 
 on:
   workflow_dispatch:
-  # Run job every day at 1:00pm
-  # schedule:
-  #             # https://crontab.guru/
-  #             #   ┌───────────── minute (0 - 59)
-  #             # │ ┌───────────── hour (0 - 23)
-  #             # │ │ ┌───────────── day of the month (1 - 31)
-  #             # │ │ │ ┌───────────── month (1 - 12 or JAN-DEC)
-  #             # │ │ │ │ ┌───────────── day of the week (0 - 6 or SUN-SAT)
-  #             # │ │ │ │ │
-  #             # │ │ │ │ │
-  #             # │ │ │ │ │
-  #             # * * * * *
-  #   - cron:  '0 13 * * *'
+  # Run job At 08:15 on every day-of-week from Monday through Friday.
+  schedule:
+              # https://crontab.guru/
+              #   ┌───────────── minute (0 - 59)
+              # │ ┌───────────── hour (0 - 23)
+              # │ │ ┌───────────── day of the month (1 - 31)
+              # │ │ │ ┌───────────── month (1 - 12 or JAN-DEC)
+              # │ │ │ │ ┌───────────── day of the week (0 - 6 or SUN-SAT)
+              # │ │ │ │ │
+              # │ │ │ │ │
+              # │ │ │ │ │
+              # * * * * *
+    - cron:  '15 8 * * 1-5'
 
 jobs:
-  execute_analyzer:
+  fetch_next_url:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
+    outputs:
+      repoUrl: ${{ steps.lambdaOutputExtraction.outputs.repoUrl }}
 
     steps:
       - name: ⚡️ Invoke Repo Analyzer Function Lambda
@@ -47,41 +49,110 @@ jobs:
         run: echo ::set-output name=repoUrl::$(cat invocation-response.json | jq . | jq .body.repoUrl | tr -d '"' 2>&1)
         id: lambdaOutputExtraction
 
-      - name: ⬇️ Checkout external repository
+  execute_analyzer:
+    needs: [fetch_next_url]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    env:
+      REPO_URL: ${{ needs.fetch_next_url.outputs.repoUrl }}
+
+    steps:
+      - name: ⬇️ Checkout THIS repository
+        if: ${{ env.REPO_URL }}
+        id: checkout-external-repo
         uses: actions/checkout@v3
-        with:
-          repository: ${{ steps.lambdaOutputExtraction.outputs.repoUrl }}
 
-      # preform code scan
-      # https://github.com/marketplace/actions/codacy-analysis-cli
-      - name: ✅ Run Codacy Analysis CLI
-        uses: codacy/codacy-analysis-cli-action@master
-
-      - name: 📁 Check README file existence
-        id: check_files
-        uses: andstor/file-existence-action@v1
-        with:
-          files: "README.md"
-
-      # preform TYPO scan
-      # https://github.com/crate-ci/typos
-      - name: 🚫 Check spelling of README
-        if: steps.check_files.outputs.files_exists == 'true'
-        uses: crate-ci/typos@master
-        with: 
-          files: ./README.md
-
-      - name: ✏️ Generate analysis report
+      - name: ✏️ Initialize analysis report
         run: |
           mkdir output
           cd output
-          cat > metadata.txt
-          echo ${{ steps.lambdaOutputExtraction.outputs.repoUrl }} >> metadata.txt
-          date >> metadata.txt
-          cat > report.md
-          echo '## ${{ steps.lambdaOutputExtraction.outputs.repoUrl }}' >> report.md
+          mkdir security
+
+          touch README.md
+          echo "# 🧪 Repository Analysis Report" >> README.md
+          echo "" >> README.md
+
+          echo "## 🏷️ Metadata" >> README.md
+          echo "" >> README.md
+          echo "Repository:" >> README.md
+          echo '[${{ env.REPO_URL }}](https://github.com/${{ env.REPO_URL }})' >> README.md
+          echo "" >> README.md
+          echo "Analysis Date:" >> README.md
+          date >> README.md
+          echo "" >> README.md
+          echo "---" >> README.md
+          echo "" >> README.md
+
+          echo "## 🛡️ Security Scan" >> README.md
+          echo "" >> README.md
+          echo '- [Sarif output](./security)' >> README.md
+          echo "" >> README.md
+
+          echo "## 🚫 Typo Scan" >> README.md
+          echo "" >> README.md
+          echo '- [typos.txt](./typos.txt)' >> README.md
+          echo '- [typos-diff.md](./typos-diff.md)' >> README.md
+          echo "" >> README.md
+          
+          touch typos.txt
+          touch typo-diff.md
+          cd ..
+
+      # Preform code scan
+      # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      
+      - name: 🛠️ Initialize CodeQL
+        if: steps.checkout-external-repo.outcome == 'success' && steps.checkout-external-repo.conclusion == 'success'
+        uses: github/codeql-action/init@v2
+        with:
+          debug: true
+      
+      # - name: 🏗️ Autobuild Repo Code
+      #   if: steps.checkout-external-repo.outcome == 'success' && steps.checkout-external-repo.conclusion == 'success'
+      #   uses: github/codeql-action/autobuild@v2
+
+      - name: ✅ Perform CodeQL Analysis
+        if: steps.checkout-external-repo.outcome == 'success' && steps.checkout-external-repo.conclusion == 'success'
+        id: codeql-analysis
+        uses: github/codeql-action/analyze@v2
+        with:
+          upload: "false"
+          add-snippets: "true"
+          output: "../results"
+
+      - name: 📁 Move CodeQL results into output folder
+        if: steps.codeql-analysis.outcome == 'success' && steps.codeql-analysis.conclusion == 'success'
+        run: mv ../results output/security
+
+      # Preform typo scan
+      # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      # https://github.com/crate-ci/typos
+      # NOTE: manually installed typos package to generate output file
+      
+      - name:  🛠️ Configure rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: 🛠️ Configure rust cargo (package manager)
+        uses: actions-rs/cargo@v1
+    
+      - name: 📦 Install spell-checker dependency
+        run: cargo install typos-cli
+
+      - name: 🚫 Preform typo scan
+        if: always() && steps.checkout-external-repo.outcome == 'success' && steps.checkout-external-repo.conclusion == 'success'
+        id: typo-scan
+        run: |
+          echo '## Detected Typos' >> output/typos.txt
+          ${{ github.workspace }}/../../../.cargo/bin/typos >> output/typos.txt || true
+          echo '## Detected Typos Diff' >> output/typo-diff.md
+          echo '```md' >> output/typo-diff.md
+          ${{ github.workspace }}/../../../.cargo/bin/typos --diff >> output/typo-diff.md || true
+          echo '```' >> output/typo-diff.md
 
       - name: 🚚 Push report to store repository
+        if: always() && (steps.typo-scan.outcome == 'success' && steps.typo-scan.conclusion == 'success' || steps.codeql-analysis.outcome == 'success' && steps.codeql-analysis.conclusion == 'success')
         uses: cpina/github-action-push-to-another-repository@main
         env:
           # SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
@@ -90,6 +161,44 @@ jobs:
           source-directory: output
           destination-github-username: spencerlepine
           destination-repository-name: ${{ secrets.CONTRIBUTION_STORE_REPO }}
-          target-directory: ${{ steps.lambdaOutputExtraction.outputs.repoUrl }}
+          target-directory: ${{ env.REPO_URL }}
           user-email: spencerlepine26@gmail.com
           target-branch: main
+
+      - name: 🔊 Send conditional failure mail
+        if: failure()
+        uses: dawidd6/action-send-mail@v3.7.0
+        with:
+          # mail server settings
+          server_address: smtp.gmail.com
+          server_port: 465
+          # user credentials
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          # email subject
+          subject: ❌ (FAILURE) Analysis workflow - (${{ env.REPO_URL }})
+          # email body as text
+          body: ${{ github.job }} job in workflow ${{ github.workflow }} of ${{ github.repository }} has ${{ job.status }} - for repository (${{ env.REPO_URL }})
+          # comma-separated string, send email to
+          to: spencerlepine26@gmail.com
+          # from email name
+          from: SpencerBot
+
+      - name: 🔊 Send conditional success mail
+        if: success()
+        uses: dawidd6/action-send-mail@v3.7.0
+        with:
+          # mail server settings
+          server_address: smtp.gmail.com
+          server_port: 465
+          # user credentials
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          # email subject
+          subject: 🎉 (NEW) Repository Analysis Success - "${{ env.REPO_URL }}"
+          # email body as text
+          body: (${{ env.REPO_URL }}) => view analysis details - https://github.com/spencerlepine/${{ secrets.CONTRIBUTION_STORE_REPO }}/tree/main/${{ env.REPO_URL }}
+          # comma-separated string, send email to
+          to: spencerlepine26@gmail.com
+          # from email name
+          from: SpencerBot
