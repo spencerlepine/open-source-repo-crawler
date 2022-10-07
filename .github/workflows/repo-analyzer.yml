@@ -17,8 +17,9 @@ on:
     - cron:  '15 8 * * 1-5'
 
 jobs:
-  fetch_next_url:
+  fetch_repo_url:
     runs-on: ubuntu-latest
+    name: "☁️ Fetch URL From AWS"
     if: github.ref == 'refs/heads/main'
     outputs:
       repoUrl: ${{ steps.lambdaOutputExtraction.outputs.repoUrl }}
@@ -48,30 +49,179 @@ jobs:
         if: always()
         run: echo ::set-output name=repoUrl::$(cat invocation-response.json | jq . | jq .body.repoUrl | tr -d '"' 2>&1)
         id: lambdaOutputExtraction
-
-  execute_analyzer:
-    needs: [fetch_next_url]
+  
+  security_scan:
+    needs: [fetch_repo_url]
+    name: "🛡️ Security Scan"
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: ${{ needs.fetch_repo_url.outputs.repoUrl }} && github.ref == 'refs/heads/main'
     env:
-      REPO_URL: ${{ needs.fetch_next_url.outputs.repoUrl }}
-
+      REPO_URL: ${{ needs.fetch_repo_url.outputs.repoUrl }}
+      
     steps:
-      - name: ⬇️ Checkout THIS repository
+      - name: ⬇️ Checkout external repository
         if: ${{ env.REPO_URL }}
         id: checkout-external-repo
         uses: actions/checkout@v3
-
+        with:
+          repository: ${{ env.REPO_URL }}
+      
       - name: ✏️ Initialize analysis report
         run: |
-          mkdir output
-          cd output
           mkdir security
+          cd security
+          mkdir codeql
+          mkdir SCAN
+          cd ..
+      
+      - name: 🛠️ Initialize CodeQL
+        if: steps.checkout-external-repo.outcome == 'success' && steps.checkout-external-repo.conclusion == 'success'
+        uses: github/codeql-action/init@v2
+        with:
+          debug: true
+      
+      - name: 🏗️ Autobuild Repo Code
+        if: steps.checkout-external-repo.outcome == 'success' && steps.checkout-external-repo.conclusion == 'success'
+        uses: github/codeql-action/autobuild@v2
 
+      - name: ✅ Perform CodeQL Analysis
+        if: always() && steps.checkout-external-repo.outcome == 'success' && steps.checkout-external-repo.conclusion == 'success'
+        id: codeql-analysis
+        uses: github/codeql-action/analyze@v2
+        with:
+          upload: "false"
+          add-snippets: "true"
+          output: "../results"
+
+      - name: 📁 Move CodeQL results into output folder
+        if: always() && steps.codeql-analysis.outcome == 'success' && steps.codeql-analysis.conclusion == 'success'
+        run: cp ../results/. ./security/codeql
+        
+      # Alternate code scan
+      # https://github.com/marketplace/actions/security-and-licence-scan
+      # NOTES:
+      #   - This action needs to be provided with a link to the target repository
+      #   - When WORKSPACE is set, it can auto-build the source code
+      #   - When WORKSPACE is set, it can auto-detect the languages as well
+      #   - It will scan the dependencies and code from there
+      
+      - name: ✅ Perform SCAN Analysis
+        if: always() && steps.checkout-external-repo.outcome == 'success' && steps.checkout-external-repo.conclusion == 'success'
+        id: scan-analysis
+        uses: ShiftLeftSecurity/scan-action@master
+        # with:
+        #   src: ${{ env.REPO_URL }} NOT WORKING
+        env:
+          WORKSPACE: https://github.com/${{ env.REPO_URL }}
+          SCAN_AUTO_BUILD: true
+          
+      - name: Print reports folder
+        if: always()
+        run: |
+          ls -a ./reports
+          
+      - name: 📁 Move SCAN results into output folder
+        if: always() && steps.scan-analysis.outcome == 'success' && steps.scan-analysis.conclusion == 'success'
+        run: cp -a ./reports/. ./security/SCAN
+
+      - name: ⬆️ Upload security scan results
+        if: always() && (steps.scan-analysis.outcome == 'success' || steps.codeql-analysis.conclusion == 'success')
+        uses: actions/upload-artifact@v3
+        with:
+          name: security
+          path: security
+  
+  # Preform typo scan
+  # https://github.com/crate-ci/typos
+  # https://crates.io/crates/typos-cli
+  typo_scan:
+    needs: [fetch_repo_url]
+    name: "🚫 Typo Scan"
+    runs-on: ubuntu-latest
+    if: ${{ needs.fetch_repo_url.outputs.repoUrl }} && github.ref == 'refs/heads/main'
+    env:
+      REPO_URL: ${{ needs.fetch_repo_url.outputs.repoUrl }}
+      
+    steps:
+      - name: ⬇️ Checkout external repository
+        if: ${{ env.REPO_URL }}
+        id: checkout-external-repo
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ env.REPO_URL }}
+      
+      - name: ✏️ Initialize analysis report
+        run: |
+          mkdir typos
+          cd typos
+          touch typos.txt
+          touch typos-diff.md
+          cd ..
+      
+      - name:  🛠️ Configure rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: 🛠️ Configure rust cargo (package manager)
+        if: always()
+        uses: actions-rs/cargo@v1
+    
+      - name: 📦 Install spell-checker dependency
+        run: cargo install typos-cli
+        
+      - name: 🛠️ Create spell checker config file
+        run: |
+          touch _typos.toml
+          echo "[files]" >> _typos.toml
+          echo "extend-exclude = ['typos/**', 'public/**']" >> _typos.toml
+
+      - name: 🚫 Preform typo scan
+        id: typo-scan
+        run: |
+          echo '## Detected Typos' >> typos/typos.txt
+          ${{ github.workspace }}/../../../.cargo/bin/typos >> typos/typos.txt || true
+          echo '## Detected Typos Diff' >> typos/typos-diff.md
+          echo '```diff' >> typos/typos-diff.md
+          ${{ github.workspace }}/../../../.cargo/bin/typos --diff >> typos/typos-diff.md || true
+          
+      - name: ⬆️ Upload typo scan results
+        uses: actions/upload-artifact@v3
+        with:
+          name: typos
+          path: typos
+
+  finalize_report:
+    needs: [security_scan, typo_scan]
+    name: "📝 Finalize Report"
+    runs-on: ubuntu-latest
+    if: always() && github.ref == 'refs/heads/main'
+    env:
+      REPO_URL: ${{ needs.fetch_repo_url.outputs.repoUrl }}
+    
+    steps:
+      - name: ⬆️ Download security scan results
+        if: always()
+        uses: actions/download-artifact@v3
+        with:
+          name: security
+          
+      - name: ⬆️ Download typo scan results
+        if: always()
+        uses: actions/download-artifact@v3
+        with:
+          name: typos
+          
+      - name: ✏️ Create analysis report files
+        if: always()
+        run: |
+          mkdir output
+          [ -f security ] && mv security output
+          [ -f typos ] && mv typos output
+          cd output
           touch README.md
           echo "# 🧪 Repository Analysis Report" >> README.md
           echo "" >> README.md
-
           echo "## 🏷️ Metadata" >> README.md
           echo "" >> README.md
           echo "Repository:" >> README.md
@@ -82,78 +232,29 @@ jobs:
           echo "" >> README.md
           echo "---" >> README.md
           echo "" >> README.md
-
-          echo "## 🛡️ Security Scan" >> README.md
+          echo "## [🛡️ Security Scan](./security)" >> README.md
           echo "" >> README.md
-          echo '- [Sarif output](./security)' >> README.md
           echo "" >> README.md
-
-          echo "## 🚫 Typo Scan" >> README.md
+          echo "## [🚫 Typo Scan](./typos)" >> README.md
           echo "" >> README.md
-          echo '- [typos.txt](./typos.txt)' >> README.md
-          echo '- [typos-diff.md](./typos-diff.md)' >> README.md
           echo "" >> README.md
-          
-          touch typos.txt
-          touch typo-diff.md
           cd ..
-
-      # Preform code scan
-      # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       
-      - name: 🛠️ Initialize CodeQL
-        if: steps.checkout-external-repo.outcome == 'success' && steps.checkout-external-repo.conclusion == 'success'
-        uses: github/codeql-action/init@v2
-        with:
-          debug: true
-      
-      # - name: 🏗️ Autobuild Repo Code
-      #   if: steps.checkout-external-repo.outcome == 'success' && steps.checkout-external-repo.conclusion == 'success'
-      #   uses: github/codeql-action/autobuild@v2
-
-      - name: ✅ Perform CodeQL Analysis
-        if: steps.checkout-external-repo.outcome == 'success' && steps.checkout-external-repo.conclusion == 'success'
-        id: codeql-analysis
-        uses: github/codeql-action/analyze@v2
-        with:
-          upload: "false"
-          add-snippets: "true"
-          output: "../results"
-
-      - name: 📁 Move CodeQL results into output folder
-        if: steps.codeql-analysis.outcome == 'success' && steps.codeql-analysis.conclusion == 'success'
-        run: mv ../results output/security
-
-      # Preform typo scan
-      # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      # https://github.com/crate-ci/typos
-      # NOTE: manually installed typos package to generate output file
-      
-      - name:  🛠️ Configure rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-
-      - name: 🛠️ Configure rust cargo (package manager)
-        uses: actions-rs/cargo@v1
-    
-      - name: 📦 Install spell-checker dependency
-        # https://crates.io/crates/typos-cli
-        run: cargo install typos-cli
-
-      - name: 🚫 Preform typo scan
-        if: always() && steps.checkout-external-repo.outcome == 'success' && steps.checkout-external-repo.conclusion == 'success'
-        id: typo-scan
+      - name: 📝 Add job summary output
         run: |
-          echo '## Detected Typos' >> output/typos.txt
-          ${{ github.workspace }}/../../../.cargo/bin/typos >> output/typos.txt || true
-          echo '## Detected Typos Diff' >> output/typo-diff.md
-          echo '```diff' >> output/typo-diff.md
-          ${{ github.workspace }}/../../../.cargo/bin/typos --diff >> output/typo-diff.md || true
-          echo '```' >> output/typo-diff.md
-
+          echo "# 🧪 Repository Analyzed" >> README.md
+          echo "" >> README.md
+          echo "## 🏷️ Metadata" >> $GITHUB_STEP_SUMMARY
+          echo "" >> README.md
+          echo "Repository:" >> $GITHUB_STEP_SUMMARY
+          echo '[${{ env.REPO_URL }}](https://github.com/${{ env.REPO_URL }})' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Analysis Date:" >> README.md
+          date >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
       - name: 🚚 Push report to store repository
-        if: always() && (steps.typo-scan.outcome == 'success' && steps.typo-scan.conclusion == 'success' || steps.codeql-analysis.outcome == 'success' && steps.codeql-analysis.conclusion == 'success')
+        if: always() && ${{ needs.security_scan.result == 'success' || needs.typo_scan.result == 'success' }}
         uses: cpina/github-action-push-to-another-repository@main
         env:
           # SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
@@ -165,9 +266,18 @@ jobs:
           target-directory: ${{ env.REPO_URL }}
           user-email: spencerlepine26@gmail.com
           target-branch: main
-
+          
+  email_notification:
+    needs: [security_scan, typo_scan, finalize_report]
+    name: "🔔 Send Email Notification"
+    runs-on: ubuntu-latest
+    if: always() && github.ref == 'refs/heads/main'
+    env:
+      REPO_URL: ${{ needs.fetch_repo_url.outputs.repoUrl }}
+      
+    steps:
       - name: 🔊 Send conditional failure mail
-        if: failure()
+        if: ${{ needs.security_scan.result == 'failure' && needs.typo_scan.result == 'failure' }}
         uses: dawidd6/action-send-mail@v3.7.0
         with:
           # mail server settings
@@ -186,7 +296,7 @@ jobs:
           from: SpencerBot
 
       - name: 🔊 Send conditional success mail
-        if: success()
+        if: ${{ needs.security_scan.result == 'success' || needs.typo_scan.result == 'success' }}
         uses: dawidd6/action-send-mail@v3.7.0
         with:
           # mail server settings
