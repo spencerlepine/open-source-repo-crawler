@@ -97,7 +97,7 @@ jobs:
 
       - name: 📁 Move CodeQL results into output folder
         if: always() && steps.codeql-analysis.outcome == 'success' && steps.codeql-analysis.conclusion == 'success'
-        run: cp ../results/. ./security/codeql
+        run: cp -a ../results/. ./security/codeql
         
       # Alternate code scan
       # https://github.com/marketplace/actions/security-and-licence-scan
@@ -116,11 +116,6 @@ jobs:
         env:
           WORKSPACE: https://github.com/${{ env.REPO_URL }}
           SCAN_AUTO_BUILD: true
-          
-      - name: Print reports folder
-        if: always()
-        run: |
-          ls -a ./reports
           
       - name: 📁 Move SCAN results into output folder
         if: always() && steps.scan-analysis.outcome == 'success' && steps.scan-analysis.conclusion == 'success'
@@ -194,7 +189,7 @@ jobs:
           path: typos
 
   finalize_report:
-    needs: [security_scan, typo_scan]
+    needs: [fetch_repo_url, security_scan, typo_scan]
     name: "📝 Finalize Report"
     runs-on: ubuntu-latest
     if: always() && github.ref == 'refs/heads/main'
@@ -270,7 +265,7 @@ jobs:
           target-branch: main
           
   email_notification:
-    needs: [security_scan, typo_scan, finalize_report]
+    needs: [fetch_repo_url, security_scan, typo_scan, finalize_report]
     name: "🔔 Send Email Notification"
     runs-on: ubuntu-latest
     if: always() && github.ref == 'refs/heads/main'
