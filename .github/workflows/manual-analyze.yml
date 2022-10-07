@@ -197,24 +197,10 @@ jobs:
       REPO_URL: ${{ needs.fetch_repo_url.outputs.repoUrl }}
     
     steps:
-      - name: ⬇️ Download security scan results
-        if: always()
-        uses: actions/download-artifact@v3
-        with:
-          name: security
-          
-      - name: ⬇️ Download typo scan results
-        if: always()
-        uses: actions/download-artifact@v3
-        with:
-          name: typos
-          
       - name: ✏️ Create analysis report files
         if: always()
         run: |
           mkdir output
-          [ -f security ] && mv security output
-          [ -f typos ] && mv typos output
           cd output
           touch README.md
           echo "# 🧪 Repository Analysis Report" >> README.md
@@ -237,6 +223,28 @@ jobs:
           echo "" >> README.md
           cd ..
 
+      - name: ⬆️ Download security scan results
+        if: always()
+        uses: actions/download-artifact@v3
+        with:
+          name: security
+          
+      - name: ⬆️ Download typo scan results
+        if: always()
+        uses: actions/download-artifact@v3
+        with:
+          name: typos
+
+      - name: 🚚 Move scan results into output folder
+        if: always()
+        run: |
+          cd output
+          mkdir security
+          mkdir typos
+          cd ..
+          [ -d "./security" ] && cp -a ./security/. output/security
+          [ -d "./typos" ] && cp -a ./typos/. output/typos
+      
       - name: 📝 Add job summary output
         run: |
           echo "# 🧪 Repository Analyzed" >> README.md
@@ -247,6 +255,7 @@ jobs:
           echo '[${{ env.REPO_URL }}](https://github.com/${{ env.REPO_URL }})' >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Analysis Date:" >> README.md
+          echo "" >> $GITHUB_STEP_SUMMARY
           date >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
@@ -263,7 +272,7 @@ jobs:
           target-directory: ${{ env.REPO_URL }}
           user-email: spencerlepine26@gmail.com
           target-branch: main
-          
+
   email_notification:
     needs: [fetch_repo_url, security_scan, typo_scan, finalize_report]
     name: "🔔 Send Email Notification"
