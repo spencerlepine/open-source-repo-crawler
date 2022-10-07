@@ -1,4 +1,4 @@
-name: 🧐 Repo Analyzer
+name: 👀 Analyze Custom Repo
 
 on:
   workflow_dispatch:
