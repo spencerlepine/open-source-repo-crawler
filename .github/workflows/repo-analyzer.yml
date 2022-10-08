@@ -221,17 +221,19 @@ jobs:
           echo "" >> README.md
           cd ..
 
-      - name: ⬆️ Download security scan results
+      - name: ⬇️ Download security scan results
         if: always()
         uses: actions/download-artifact@v3
         with:
           name: security
+          path: ~/security
           
-      - name: ⬆️ Download typo scan results
+      - name: ⬇️ Download typo scan results
         if: always()
         uses: actions/download-artifact@v3
         with:
           name: typos
+          path: ~/typos
 
       - name: 🚚 Move scan results into output folder
         if: always()
