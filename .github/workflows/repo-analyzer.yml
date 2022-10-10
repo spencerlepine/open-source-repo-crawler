@@ -283,7 +283,7 @@ jobs:
       
     steps:
       - name: 🔊 Send conditional failure mail
-        if: ${{ needs.security_scan.result == 'failure' && needs.typo_scan.result == 'failure' }}
+        if: ${{ (needs.security_scan.result == 'failure' && needs.typo_scan.result == 'failure') || needs.finalize_report.result == 'failure' }}
         uses: dawidd6/action-send-mail@v3.7.0
         with:
           # mail server settings
@@ -302,7 +302,7 @@ jobs:
           from: SpencerBot
 
       - name: 🔊 Send conditional success mail
-        if: ${{ needs.security_scan.result == 'success' || needs.typo_scan.result == 'success' }}
+        if: ${{ (needs.security_scan.result == 'success' || needs.typo_scan.result == 'success') && needs.finalize_report.result == 'success' }}
         uses: dawidd6/action-send-mail@v3.7.0
         with:
           # mail server settings
