@@ -152,7 +152,7 @@ jobs:
           mkdir typos
           cd typos
           touch typos.txt
-          touch typos-diff.md
+          touch README.md
           cd ..
       
       - name:  🛠️ Configure rust toolchain
@@ -178,9 +178,9 @@ jobs:
         run: |
           echo '## Detected Typos' >> typos/typos.txt
           ${{ github.workspace }}/../../../.cargo/bin/typos >> typos/typos.txt || true
-          echo '## Detected Typos Diff' >> typos/typos-diff.md
-          echo '```diff' >> typos/typos-diff.md
-          ${{ github.workspace }}/../../../.cargo/bin/typos --diff >> typos/typos-diff.md || true
+          echo '## Detected Typos Diff' >> typos/README.md
+          echo '```diff' >> typos/README.md
+          ${{ github.workspace }}/../../../.cargo/bin/typos --diff >> typos/README.md || true
           
       - name: ⬆️ Upload typo scan results
         uses: actions/upload-artifact@v3
@@ -297,7 +297,10 @@ jobs:
           # email subject
           subject: ❌ (FAILURE) Analysis workflow - (${{ env.REPO_URL }})
           # email body as text
-          body: ${{ github.job }} job in workflow ${{ github.workflow }} of ${{ github.repository }} has ${{ job.status }} - for repository (${{ env.REPO_URL }})
+          body: |
+            Repo Analysis failed for https://github.com/${{ env.REPO_URL }}
+            
+            View the workflow run here: https://github.com/spencerlepine/open-source-crawler/actions/runs/${{ github.run_id }}
           # comma-separated string, send email to
           to: spencerlepine26@gmail.com
           # from email name
@@ -314,9 +317,14 @@ jobs:
           username: ${{ secrets.EMAIL_USERNAME }}
           password: ${{ secrets.EMAIL_PASSWORD }}
           # email subject
-          subject: 🎉 (NEW) Repository Analysis Success - "${{ env.REPO_URL }}"
+          subject: 🎉 (NEW) Repository Analysis Success - (${{ env.REPO_URL }})
           # email body as text
-          body: (${{ env.REPO_URL }}) => view analysis details - https://github.com/spencerlepine/${{ secrets.CONTRIBUTION_STORE_REPO }}/tree/main/${{ env.REPO_URL }}
+          body: |
+            Repo Analysis succeeded for https://github.com/${{ env.REPO_URL }}
+            
+            View the report here: https://github.com/spencerlepine/${{ secrets.CONTRIBUTION_STORE_REPO }}/tree/main/${{ env.REPO_URL }}
+
+            View the workflow run here: https://github.com/spencerlepine/open-source-crawler/actions/runs/${{ github.run_id }}
           # comma-separated string, send email to
           to: spencerlepine26@gmail.com
           # from email name
