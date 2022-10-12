@@ -226,14 +226,14 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: security
-          path: ~/security
+          path: security
           
       - name: ⬇️ Download typo scan results
         if: always()
         uses: actions/download-artifact@v3
         with:
           name: typos
-          path: ~/typos
+          path: typos
 
       - name: 🚚 Move scan results into output folder
         if: always()
@@ -242,8 +242,8 @@ jobs:
           mkdir security
           mkdir typos
           cd ..
-          [ -d "./security" ] && cp -a ./security/. output/security
-          [ -d "./typos" ] && cp -a ./typos/. output/typos
+          [ -d "./security" ] && cp -a ./security/. output/security || true
+          [ -d "./typos" ] && cp -a ./typos/. output/typos || true
       
       - name: 📝 Add job summary output
         run: |

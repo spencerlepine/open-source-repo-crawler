@@ -244,8 +244,8 @@ jobs:
           mkdir security
           mkdir typos
           cd ..
-          [ -d "./security" ] && cp -a ./security/. output/security
-          [ -d "./typos" ] && cp -a ./typos/. output/typos
+          [ -d "./security" ] && cp -a ./security/. output/security || true
+          [ -d "./typos" ] && cp -a ./typos/. output/typos || true
       
       - name: 📝 Add job summary output
         run: |
