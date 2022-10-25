@@ -41,3 +41,40 @@ jobs:
         with:
           name: lambda-output
           path: invocation-response.json
+
+  email_notification:
+    needs: [crawl_repo]
+    name: "🔔 Send Email Notification"
+    runs-on: ubuntu-latest
+    if: always() && github.ref == 'refs/heads/main'
+      
+    steps:
+      - name: 🔊 Send conditional failure mail
+        if: ${{ needs.crawl_repo.result == 'failure' }}
+        uses: dawidd6/action-send-mail@v3.7.0
+        with:
+          # mail server settings
+          server_address: smtp.gmail.com
+          server_port: 465
+          # user credentials
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          # email subject
+          subject: ❌ (FAILURE) Open Source Crawler Workflow
+          # email body as text
+          body: |
+            ❌ Web Crawler failed for: Open Source Crawler Workflow
+
+            Possible failures include:
+              - GitHub Actions
+              - Lambda function
+              - Redis database
+
+            ---------
+
+            ℹ️ Repository: https://github.com/open-source-crawler
+            🤖 Workflow: https://github.com/spencerlepine/open-source-crawler/actions/runs/${{ github.run_id }}
+          # comma-separated string, send email to
+          to: spencerlepine26@gmail.com
+          # from email name
+          from: SpencerBot

@@ -296,9 +296,10 @@ jobs:
           subject: ❌ (FAILURE) Analysis workflow - (${{ env.REPO_URL }})
           # email body as text
           body: |
-            Repo Analysis failed for https://github.com/${{ env.REPO_URL }}
-            
-            View the workflow run here: https://github.com/spencerlepine/open-source-crawler/actions/runs/${{ github.run_id }}
+            ❌ Repo Analysis failed for: ${{ env.REPO_URL }}
+
+            ℹ️ Repository: https://github.com/${{ env.REPO_URL }}
+            🤖 Workflow: https://github.com/spencerlepine/open-source-crawler/actions/runs/${{ github.run_id }}
           # comma-separated string, send email to
           to: spencerlepine26@gmail.com
           # from email name
@@ -318,11 +319,13 @@ jobs:
           subject: 🎉 (NEW) Repository Analysis Success - (${{ env.REPO_URL }})
           # email body as text
           body: |
-            Repo Analysis succeeded for https://github.com/${{ env.REPO_URL }}
-            
-            View the report here: https://github.com/spencerlepine/${{ secrets.CONTRIBUTION_STORE_REPO }}/tree/main/${{ env.REPO_URL }}
+            📝 Analysis: https://github.com/spencerlepine/${{ secrets.CONTRIBUTION_STORE_REPO }}/tree/main/${{ env.REPO_URL }}
+            ℹ️ Repository: https://github.com/${{ env.REPO_URL }}
 
-            View the workflow run here: https://github.com/spencerlepine/open-source-crawler/actions/runs/${{ github.run_id }}
+            --------------
+
+            ♻️ PULL_REQUEST_TEMPLATE: https://github.com/spencerlepine/open-source-crawler-output/issues/1
+            🤖 Workflow: https://github.com/spencerlepine/open-source-crawler/actions/runs/${{ github.run_id }}
           # comma-separated string, send email to
           to: spencerlepine26@gmail.com
           # from email name
