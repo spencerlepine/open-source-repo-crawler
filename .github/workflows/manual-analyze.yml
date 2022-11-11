@@ -48,8 +48,7 @@ jobs:
           exit 1
           
       - name: ✂️ Extract repository URL from previous step
-        # run: echo ::set-output name=repoUrl::$(cat invocation-response.json | jq . | jq .body.repoUrl | tr -d '"' 2>&1)
-        run: echo ::set-output name=repoUrl::"${{ github.event.inputs.repo_user }}/${{ github.event.inputs.repo_name }}"
+        run: echo "repoUrl=${{ github.event.inputs.repo_user }}/${{ github.event.inputs.repo_name }}" >> $GITHUB_OUTPUT
         id: repoUrlOutput
   
   security_scan:

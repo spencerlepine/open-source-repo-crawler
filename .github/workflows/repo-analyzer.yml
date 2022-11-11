@@ -47,7 +47,7 @@ jobs:
 
       - name: ✂️ Extract repository URL from previous step
         if: always()
-        run: echo ::set-output name=repoUrl::$(cat invocation-response.json | jq . | jq .body.repoUrl | tr -d '"' 2>&1)
+        run: echo "repoUrl=$(cat invocation-response.json | jq . | jq .body.repoUrl | tr -d '"' 2>&1)" >> $GITHUB_OUTPUT
         id: lambdaOutputExtraction
   
   security_scan:
