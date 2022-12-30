@@ -273,60 +273,60 @@ jobs:
           user-email: spencerlepine26@gmail.com
           target-branch: main
           
-  email_notification:
-    needs: [fetch_repo_url, security_scan, typo_scan, finalize_report]
-    name: "🔔 Send Email Notification"
-    runs-on: ubuntu-latest
-    if: always() && github.ref == 'refs/heads/main'
-    env:
-      REPO_URL: ${{ needs.fetch_repo_url.outputs.repoUrl }}
+#   email_notification:
+#     needs: [fetch_repo_url, security_scan, typo_scan, finalize_report]
+#     name: "🔔 Send Email Notification"
+#     runs-on: ubuntu-latest
+#     if: always() && github.ref == 'refs/heads/main'
+#     env:
+#       REPO_URL: ${{ needs.fetch_repo_url.outputs.repoUrl }}
       
-    steps:
-      - name: 🔊 Send conditional failure mail
-        if: ${{ (needs.security_scan.result == 'failure' && needs.typo_scan.result == 'failure') || needs.finalize_report.result == 'failure' }}
-        uses: dawidd6/action-send-mail@v3.7.0
-        with:
-          # mail server settings
-          server_address: smtp.gmail.com
-          server_port: 465
-          # user credentials
-          username: ${{ secrets.EMAIL_USERNAME }}
-          password: ${{ secrets.EMAIL_PASSWORD }}
-          # email subject
-          subject: ❌ (FAILURE) Analysis workflow - (${{ env.REPO_URL }})
-          # email body as text
-          body: |
-            ❌ Repo Analysis failed for: ${{ env.REPO_URL }}
+#     steps:
+#       - name: 🔊 Send conditional failure mail
+#         if: ${{ (needs.security_scan.result == 'failure' && needs.typo_scan.result == 'failure') || needs.finalize_report.result == 'failure' }}
+#         uses: dawidd6/action-send-mail@v3.7.0
+#         with:
+#           # mail server settings
+#           server_address: smtp.gmail.com
+#           server_port: 465
+#           # user credentials
+#           username: ${{ secrets.EMAIL_USERNAME }}
+#           password: ${{ secrets.EMAIL_PASSWORD }}
+#           # email subject
+#           subject: ❌ (FAILURE) Analysis workflow - (${{ env.REPO_URL }})
+#           # email body as text
+#           body: |
+#             ❌ Repo Analysis failed for: ${{ env.REPO_URL }}
 
-            ℹ️ Repository: https://github.com/${{ env.REPO_URL }}
-            🤖 Workflow: https://github.com/spencerlepine/open-source-crawler/actions/runs/${{ github.run_id }}
-          # comma-separated string, send email to
-          to: spencerlepine26@gmail.com
-          # from email name
-          from: SpencerBot
+#             ℹ️ Repository: https://github.com/${{ env.REPO_URL }}
+#             🤖 Workflow: https://github.com/spencerlepine/open-source-crawler/actions/runs/${{ github.run_id }}
+#           # comma-separated string, send email to
+#           to: spencerlepine26@gmail.com
+#           # from email name
+#           from: SpencerBot
 
-      - name: 🔊 Send conditional success mail
-        if: ${{ (needs.security_scan.result == 'success' || needs.typo_scan.result == 'success') && needs.finalize_report.result == 'success' }}
-        uses: dawidd6/action-send-mail@v3.7.0
-        with:
-          # mail server settings
-          server_address: smtp.gmail.com
-          server_port: 465
-          # user credentials
-          username: ${{ secrets.EMAIL_USERNAME }}
-          password: ${{ secrets.EMAIL_PASSWORD }}
-          # email subject
-          subject: 🎉 (NEW) Repository Analysis Success - (${{ env.REPO_URL }})
-          # email body as text
-          body: |
-            📝 Analysis: https://github.com/spencerlepine/${{ secrets.CONTRIBUTION_STORE_REPO }}/tree/main/${{ env.REPO_URL }}
-            ℹ️ Repository: https://github.com/${{ env.REPO_URL }}
+#       - name: 🔊 Send conditional success mail
+#         if: ${{ (needs.security_scan.result == 'success' || needs.typo_scan.result == 'success') && needs.finalize_report.result == 'success' }}
+#         uses: dawidd6/action-send-mail@v3.7.0
+#         with:
+#           # mail server settings
+#           server_address: smtp.gmail.com
+#           server_port: 465
+#           # user credentials
+#           username: ${{ secrets.EMAIL_USERNAME }}
+#           password: ${{ secrets.EMAIL_PASSWORD }}
+#           # email subject
+#           subject: 🎉 (NEW) Repository Analysis Success - (${{ env.REPO_URL }})
+#           # email body as text
+#           body: |
+#             📝 Analysis: https://github.com/spencerlepine/${{ secrets.CONTRIBUTION_STORE_REPO }}/tree/main/${{ env.REPO_URL }}
+#             ℹ️ Repository: https://github.com/${{ env.REPO_URL }}
 
-            --------------
+#             --------------
 
-            ♻️ PULL_REQUEST_TEMPLATE: https://github.com/spencerlepine/open-source-crawler-output/issues/1
-            🤖 Workflow: https://github.com/spencerlepine/open-source-crawler/actions/runs/${{ github.run_id }}
-          # comma-separated string, send email to
-          to: spencerlepine26@gmail.com
-          # from email name
-          from: SpencerBot
+#             ♻️ PULL_REQUEST_TEMPLATE: https://github.com/spencerlepine/open-source-crawler-output/issues/1
+#             🤖 Workflow: https://github.com/spencerlepine/open-source-crawler/actions/runs/${{ github.run_id }}
+#           # comma-separated string, send email to
+#           to: spencerlepine26@gmail.com
+#           # from email name
+#           from: SpencerBot
