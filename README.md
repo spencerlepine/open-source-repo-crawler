@@ -2,26 +2,16 @@
 
 [![🕷️ Repo Crawler](https://github.com/spencerlepine/open-source-crawler/actions/workflows/repo-crawler.yml/badge.svg?branch=main)](https://github.com/spencerlepine/open-source-crawler/actions/workflows/repo-crawler.yml) [![🧐 Repo Analyzer](https://github.com/spencerlepine/open-source-crawler/actions/workflows/repo-analyzer.yml/badge.svg?branch=main)](https://github.com/spencerlepine/open-source-crawler/actions/workflows/repo-analyzer.yml) [![🚀 Deploy Lambda](https://github.com/spencerlepine/open-source-crawler/actions/workflows/deply-lambda.yml/badge.svg?branch=main)](https://github.com/spencerlepine/open-source-crawler/actions/workflows/deply-lambda.yml) [![📝 Status Reporter](https://github.com/spencerlepine/open-source-crawler/actions/workflows/status-reporter.yml/badge.svg?branch=main)](https://github.com/spencerlepine/open-source-crawler/actions/workflows/status-reporter.yml)
 
-GitHub Repository web crawler and security scanner to streamline my contributions to open source on GitHub. 
-
-Uses scheduled GitHub Actions invoking AWS Lambda functions connected to Redis database.
-
-## 🌟 How It's Built
-
-- Development Process - [Blog Post](TODO) | [Medium Post](TODO)
-- Project Walk-through - [Youtube Video](TODO)
-- Project Walk-through Slideshow - [Google Slides](https://docs.google.com/presentation/d/1sANVXPe05rDFzKI7B5r8jIwC-Qpg4v47SLCIn9kdRBA/edit?usp=sharing)
-
-<!-- [!["Project Walk-through Video Thumbnail"](https://img.youtube.com/vi/YOUTUBE_VIDEO_ID_HERE/0.jpg)](https://www.youtube.com/watch?v=YOUTUBE_VIDEO_ID_HERE) TODO -->
+Web crawler to browse GitHub open source repositories, built with GitHub Actions, AWS Lambda, and RedisDB.
 
 [!["Project Walk-through Video Thumbnail"](./docs/images/readme-thumbnail.png)](https://www.youtube.com/channel/UCBL6vAHJZqUlyJp-rcFU55Q)
 
 
 ## 🧰 Technologies
-- [GitHub Actions](TODO)
-- [Node.js](TODO)
-- [AWS Lambda](TODO)
-- [Redis](TODO)
+- [GitHub Actions](https://github.com/features/actions)
+- [Node.js](https://nodejs.org/en)
+- [AWS Lambda](https://aws.amazon.com/lambda/)
+- [Redis](https://redis.io/)
 
 ## 📄 Documentation
 
