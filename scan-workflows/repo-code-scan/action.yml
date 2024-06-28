@@ -1,0 +1,80 @@
+name: 'RepoScan'
+description: 'Scan a public repository'
+inputs:
+  repository:
+    description: ''
+    required: true
+  typo-scan-exclude-match: 
+    description: ''
+    default: '[''typos/**'', ''public/**'']'
+  REPORT_ARCHIVE_OWNER:
+    description: ''
+  REPORT_ARCHIVE_REPO:
+    description: ''
+  ARCHIVE_REPO_BRANCH_TARGET:
+    description: ''
+    default: 'main'
+  ARCHIVE_COMMIT_EMAIL:
+    description: ''
+    default: 'commit-bot@gmail.com'
+  ARCHIVE_REPO_ACCESS_TOKEN:
+    description: ''
+runs:
+  using: "composite"
+  steps:
+    - name: Set environment variables for folder names
+      run: |
+        TYPOS_REPORT_FOLDER="typos-report"
+        echo "typos-report-folder=${TYPOS_REPORT_FOLDER}" >> $GITHUB_ENV
+        FINAL_REPORT_FOLDER="final-report"
+        echo "final-report-folder=${FINAL_REPORT_FOLDER}" >> $GITHUB_ENV
+      shell: bash
+
+    # Preform scans
+    - name: Scan external source code for typos
+      uses: spencerlepine/repo-typo-scan@main
+      with:
+        repository: ${{ inputs.repository }}
+        scan-exclude-match: ${{ inputs.typo-scan-exclude-match }}
+        report-folder-name: ${{ env.typos-report-folder }}
+
+    # Download scan reports
+    - name: Download typo scan report
+      if: ${{ inputs.REPORT_ARCHIVE_REPO && inputs.REPORT_ARCHIVE_OWNER }}
+      uses: actions/download-artifact@v3
+      with:
+        name: ${{ env.typos-report-folder }}
+        path: ${{ env.typos-report-folder }}
+
+    - name: Format user-friendly report
+      if: ${{ inputs.REPORT_ARCHIVE_REPO && inputs.REPORT_ARCHIVE_OWNER }}
+      run: |
+        mkdir ${{ env.final-report-folder }}
+        mv ${{ env.typos-report-folder }} ${{ env.final-report-folder }}
+        cd ${{ env.final-report-folder }}
+        touch README.md
+        echo "# ✅ Scan Complete - [${{ inputs.repository }}](https://github.com/${{ inputs.repository }})" >> README.md
+        echo "" >> README.md
+        echo "[![View Report](https://img.shields.io/badge/view-report-green)](https://github.com/${{ inputs.REPORT_ARCHIVE_OWNER }}/${{ inputs.REPORT_ARCHIVE_REPO }}/tree/${{ inputs.ARCHIVE_REPO_BRANCH_TARGET }}/${{ inputs.repository }}) [![Fork me badge](https://img.shields.io/badge/fork-repo-blue)](https://github.com/${{ inputs.repository }}/fork)" >> README.md
+        echo "" >> README.md
+        echo "**Repository:** [${{ inputs.repository }}](https://github.com/${{ inputs.repository }})" >> README.md
+        echo "" >> README.md
+        echo "**Completion Date:** $(date)" >> README.md
+        echo "" >> README.md
+        cat README.md >> $GITHUB_STEP_SUMMARY
+        cd ..
+      shell: bash
+
+    # Store the report in the archive repo
+    - name: 🚚 Push report to store repository
+      if: ${{ inputs.REPORT_ARCHIVE_REPO && inputs.REPORT_ARCHIVE_OWNER }}
+      uses: cpina/github-action-push-to-another-repository@main
+      env:
+        API_TOKEN_GITHUB: ${{ inputs.ARCHIVE_REPO_ACCESS_TOKEN }}
+      with:
+        source-directory: ${{ env.final-report-folder }}
+        destination-github-username: ${{ inputs.REPORT_ARCHIVE_OWNER }}
+        destination-repository-name: ${{ inputs.REPORT_ARCHIVE_REPO }}
+        target-directory: ${{ inputs.repository }}
+        user-email: ${{ inputs.ARCHIVE_COMMIT_EMAIL }}
+        target-branch: ${{ inputs.ARCHIVE_REPO_BRANCH_TARGET }}

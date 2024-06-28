@@ -1,8 +1,8 @@
 # Open Source Repository Web Crawler 🕷
 
-[![🕷️ Repo Crawler](https://github.com/spencerlepine/open-source-crawler/actions/workflows/repo-crawler.yml/badge.svg?branch=main)](https://github.com/spencerlepine/open-source-crawler/actions/workflows/repo-crawler.yml) [![🧐 Repo Analyzer](https://github.com/spencerlepine/open-source-crawler/actions/workflows/repo-analyzer.yml/badge.svg?branch=main)](https://github.com/spencerlepine/open-source-crawler/actions/workflows/repo-analyzer.yml) [![🚀 Deploy Lambda](https://github.com/spencerlepine/open-source-crawler/actions/workflows/deply-lambda.yml/badge.svg?branch=main)](https://github.com/spencerlepine/open-source-crawler/actions/workflows/deply-lambda.yml) [![📝 Status Reporter](https://github.com/spencerlepine/open-source-crawler/actions/workflows/status-reporter.yml/badge.svg?branch=main)](https://github.com/spencerlepine/open-source-crawler/actions/workflows/status-reporter.yml)
+Web crawler to browse GitHub open source repositories, scan for typos and vulnerabilites, and store all findings. Built with GitHub Actions, AWS Lambda, and RedisDB.
 
-Web crawler to browse GitHub open source repositories, built with GitHub Actions, AWS Lambda, and RedisDB.
+![AWS](https://img.shields.io/badge/AWS-lambda-orange.svg?style=for-the-badge&logo=aws-lambda&logoColor=white) ![GitHub Actions](https://img.shields.io/badge/github%20actions-%232671E5.svg?style=for-the-badge&logo=githubactions&logoColor=white) ![Redis](https://img.shields.io/badge/redis-%23DD0031.svg?style=for-the-badge&logo=redis&logoColor=white) ![NodeJS](https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white)
 
 [!["Project Walk-through Video Thumbnail"](./docs/images/readme-thumbnail.png)](https://www.youtube.com/channel/UCBL6vAHJZqUlyJp-rcFU55Q)
 

@@ -1,0 +1,16 @@
+name: CI
+on: 
+ push:
+
+jobs:
+  test-action:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: ✅ Run action.yml to verify all steps pass
+        uses: ./
+        with:
+          repository: npm/registry
+          scan-exclude-match: '[''typos/**'', ''public/**'']'
+          report-folder-name: custom-folder-name

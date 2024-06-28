@@ -1,0 +1,97 @@
+name: 'RepoTypoScan'
+description: 'Scan a public repository for typos'
+inputs:
+  repository:
+    description: 'Repository owner/name string'
+    required: true
+    default: ''
+  scan-exclude-match:
+    description: 'Array on file paths to avoid typo scan'
+    required: true
+    default: '[''typos/**'', ''public/**'']'
+  report-folder-name:
+    description: 'Custom name of report folder uploaded as artifact'
+    required: false
+    default: 'typos-report'
+runs:
+  using: "composite"
+  steps:
+    - name: Set up config
+      run: |
+        reportFolderName="${{ inputs.report-folder-name }}"
+        echo "reportFolderName=${reportFolderName}" >> $GITHUB_ENV
+        typoScanSourceRepo="spencerlepine/repo-typo-scan"
+        echo "typoScanSourceRepo=${typoScanSourceRepo}" >> $GITHUB_ENV
+      shell: bash
+    
+    - name: Validate input repository exists 
+      run: |
+        if curl --head --silent --fail https://github.com/${{ inputs.repository }} 2> /dev/null;
+        then
+          echo "This page exists."
+        else
+          echo "This page does not exist."
+          exit 1;
+        fi
+      shell: bash
+    
+    - name: Checkout repository TO SCAN
+      uses: actions/checkout@v3
+      with:
+        repository: ${{ inputs.repository }}
+        path: repoToScan
+
+    - name: Checkout repository with typo binary
+      uses: actions/checkout@v3
+      with:
+        repository: ${{ env.typoScanSourceRepo }}
+        path: typoBinary
+  
+    - name: 🛠️ Set up typos binary and toml config file
+      run: |
+        mv ./typoBinary/bin/typos repoToScan
+        cd repoToScan
+        touch _typos.toml
+        echo "[files]" >> _typos.toml
+        echo "extend-exclude = ${{ inputs.scan-exclude-match }}" >> _typos.toml
+        # echo "extend-exclude = ['typos/**', 'public/**']" >> _typos.toml
+        cat _typos.toml
+        mkdir ${{ env.reportFolderName }}
+        cd ${{ env.reportFolderName }}
+        touch typos.txt
+        touch typos.diff
+        cd ..
+        cd ..
+      shell: bash
+
+    - name: 🚫 Preform typo scan
+      run: |
+        cd repoToScan
+        chmod +x typos
+        ./typos >> ${{ env.reportFolderName }}/typos.txt || true
+        ./typos >> ${{ env.reportFolderName }}/typos.diff --diff || true
+        cd ..
+      shell: bash
+
+    - name: Generate report metadata
+      run: |
+        cd repoToScan/${{ env.reportFolderName }}
+        touch README.md
+        echo "# Typos Report - [${{ inputs.repository }}](https://github.com/${{ inputs.repository }})" >> README.md
+        echo "" >> README.md
+        echo "**Repository:** [${{ inputs.repository }}](https://github.com/${{ inputs.repository }})" >> README.md
+        echo "" >> README.md
+        echo "**Analysis Date:** $(date)" >> README.md
+        echo "" >> README.md
+        cd ..
+        # echo "Size: $(ls -alh ${{ env.reportFolderName }}/)" >> ${{ env.reportFolderName }}/README.md
+        echo "**Report size:** $(du -sh)" >> ${{ env.reportFolderName }}/README.md
+        echo "" >> ${{ env.reportFolderName }}/README.md
+        cat ${{ env.reportFolderName }}/README.md >> $GITHUB_STEP_SUMMARY
+        cd ../..
+      shell: bash
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: ${{ env.reportFolderName }}
+        path: repoToScan/${{ env.reportFolderName }}

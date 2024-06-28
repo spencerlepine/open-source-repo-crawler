@@ -1,0 +1,25 @@
+name: CI
+on: 
+ push:
+
+## -- CHANGE THIS --
+env:
+  repository: facebook/react
+
+jobs:
+  test-action:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: ✅ Run action.yml to verify all steps pass
+        uses: ./
+        with:
+          # repository: npm/registry
+          repository: ${{ env.repository }}
+          typo-scan-exclude-match: '[''typos/**'', ''public/**'']'
+          REPORT_ARCHIVE_OWNER: open-source-crawler-test
+          REPORT_ARCHIVE_REPO: repo-scan-archive-test
+          ARCHIVE_REPO_BRANCH_TARGET: main
+          ARCHIVE_COMMIT_EMAIL: commit-bot@gmail.com
+          ARCHIVE_REPO_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
